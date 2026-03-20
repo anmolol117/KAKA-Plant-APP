@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: "Manrope", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+  font: inherit;
+}
+
+.app-background-wave {
+  animation: kakaBackgroundWave 16s ease-in-out infinite alternate;
+  will-change: background-position, background-size;
+}
+
+@keyframes kakaBackgroundWave {
+  0% {
+    background-position: 50% 50%;
+    background-size: 108% 108%;
+  }
+
+  25% {
+    background-position: 49% 47%;
+    background-size: 110% 110%;
+  }
+
+  50% {
+    background-position: 52% 50%;
+    background-size: 109% 109%;
+  }
+
+  75% {
+    background-position: 50% 53%;
+    background-size: 111% 111%;
+  }
+
+  100% {
+    background-position: 48% 49%;
+    background-size: 108% 108%;
+  }
+}
+
+.critter {
+  pointer-events: none;
+  position: absolute;
+  opacity: 0.9;
+  will-change: transform;
+}
+
+.critter-back {
+  opacity: 0.55;
+  filter: blur(0.4px);
+}
+
+.critter-front {
+  opacity: 0.92;
+}
+
+.critter-flip {
+  transform: scaleX(-1);
+  transform-origin: center;
+}
+
+.critter-bee-1 {
+  left: 4%;
+  top: 12%;
+  animation: critterFloatA 16s ease-in-out infinite;
+}
+
+.critter-butterfly-1 {
+  right: 8%;
+  top: 18%;
+  animation: critterFloatB 19s ease-in-out infinite;
+}
+
+.critter-bee-2 {
+  left: 14%;
+  bottom: 16%;
+  animation: critterFloatC 15s ease-in-out infinite;
+}
+
+.critter-butterfly-2 {
+  right: 18%;
+  bottom: 22%;
+  animation: critterFloatA 20s ease-in-out infinite reverse;
+}
+
+.critter-butterfly-3 {
+  left: 3%;
+  top: 28%;
+  animation: critterFloatB 13s ease-in-out infinite;
+}
+
+.critter-bee-3 {
+  right: 5%;
+  top: 40%;
+  animation: critterFloatC 11s ease-in-out infinite;
+}
+
+.critter-butterfly-4 {
+  left: 10%;
+  bottom: 10%;
+  animation: critterFloatA 15s ease-in-out infinite;
+}
+
+.critter-bee-4 {
+  right: 14%;
+  bottom: 12%;
+  animation: critterFloatB 12s ease-in-out infinite reverse;
+}
+
+.critter-bee-5 {
+  left: 34%;
+  top: 18%;
+  animation: critterFloatC 14s ease-in-out infinite;
+}
+
+.critter-butterfly-5 {
+  right: 30%;
+  top: 20%;
+  animation: critterFloatB 17s ease-in-out infinite;
+}
+
+.critter-bee-7 {
+  left: 38%;
+  top: 60%;
+  animation: critterFloatC 10s ease-in-out infinite reverse;
+}
+
+.critter-butterfly-7 {
+  right: 34%;
+  top: 62%;
+  animation: critterFloatB 12s ease-in-out infinite reverse;
+}
+
+.critter-widget-bee {
+  left: calc(38% - 100px);
+  top: calc(3% + 200px);
+  animation: critterFloatC 12s ease-in-out infinite reverse;
+}
+
+.critter-widget-butterfly {
+  left: calc(56% + 100px);
+  top: calc(2% + 200px);
+  animation: critterFloatB 14s ease-in-out infinite;
+}
+
+@keyframes critterFloatA {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-3deg);
+  }
+
+  25% {
+    transform: translate3d(32px, -12px, 0) rotate(3deg);
+  }
+
+  50% {
+    transform: translate3d(52px, 8px, 0) rotate(-2deg);
+  }
+
+  75% {
+    transform: translate3d(24px, 18px, 0) rotate(4deg);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-3deg);
+  }
+}
+
+@keyframes critterFloatB {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate3d(-28px, 14px, 0) scale(1.03);
+  }
+
+  50% {
+    transform: translate3d(-46px, -4px, 0) scale(0.99);
+  }
+
+  75% {
+    transform: translate3d(-22px, -18px, 0) scale(1.03);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes critterFloatC {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  20% {
+    transform: translate3d(18px, -14px, 0) rotate(4deg);
+  }
+
+  50% {
+    transform: translate3d(38px, -2px, 0) rotate(-3deg);
+  }
+
+  80% {
+    transform: translate3d(16px, 14px, 0) rotate(4deg);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
