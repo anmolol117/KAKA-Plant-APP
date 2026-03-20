@@ -107,10 +107,7 @@ const ensureDocument = async (reference, defaults) => {
   const snapshot = await reference.get();
   if (!snapshot.exists) {
     await reference.set(defaults);
-    return;
   }
-
-  await reference.set(defaults, { merge: true });
 };
 
 const normalizeSettings = (settings = {}) => ({
