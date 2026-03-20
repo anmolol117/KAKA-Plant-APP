@@ -74,6 +74,30 @@ export default function App() {
     }
   };
 
+  const handleMuteToggle = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+
+    if (!nextMuted) {
+      window.setTimeout(() => {
+        ensureMediaPlayback();
+      }, 0);
+    }
+  };
+
+  const handleVolumeChange = (value) => {
+    const nextVolume = Number(value);
+    setMasterVolume(nextVolume);
+
+    if (nextVolume > 0 && isMuted) {
+      setIsMuted(false);
+    }
+
+    window.setTimeout(() => {
+      ensureMediaPlayback();
+    }, 0);
+  };
+
   useEffect(() => {
     if (careTracker?.fertilizer_last_added_at) {
       setLastFertilizedAt(careTracker.fertilizer_last_added_at);
@@ -130,6 +154,7 @@ export default function App() {
 
   useEffect(() => {
     if (musicRef.current) {
+      musicRef.current.muted = isMuted;
       musicRef.current.volume = 0.14 * effectiveVolume;
     }
   }, [effectiveVolume]);
@@ -171,9 +196,10 @@ export default function App() {
 
   useEffect(() => {
     clickPoolRef.current.forEach((audio) => {
+      audio.muted = isMuted;
       audio.volume = 0.8 * effectiveVolume;
     });
-  }, [effectiveVolume]);
+  }, [effectiveVolume, isMuted]);
 
   useEffect(() => {
     if (!wakeUntil) return;
@@ -214,9 +240,10 @@ export default function App() {
 
   useEffect(() => {
     if (snoreRef.current) {
+      snoreRef.current.muted = isMuted;
       snoreRef.current.volume = 0.18 * effectiveVolume;
     }
-  }, [effectiveVolume]);
+  }, [effectiveVolume, isMuted]);
 
   const triggerEmote = (emote) => {
     setTemporaryEmote(emote);
@@ -278,25 +305,20 @@ export default function App() {
 
       <div className="relative z-10 mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
         <header className="mb-6 rounded-[2rem] border border-white/10 bg-slate-950/30 p-6 shadow-card backdrop-blur-xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <div className="flex items-start justify-between gap-3 sm:gap-4">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">Smart plant app</p>
-              <h1 className="font-display text-5xl text-white sm:text-7xl">KAKA</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/85 sm:mt-3">
-                {welcomeMessage}
-              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80 sm:text-sm sm:tracking-[0.2em]">Smart plant app</p>
+              <h1 className="font-display text-4xl text-white sm:text-7xl">KAKA</h1>
             </div>
-            <div className="w-full max-w-[220px] self-start rounded-[1.25rem] border border-sky-100/25 bg-sky-300/20 px-3 py-2.5 backdrop-blur-xl sm:w-auto sm:min-w-[220px] sm:px-4 sm:py-3">
-              <div className="mb-2 flex items-center justify-between gap-3 sm:mb-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Audio</p>
+            <div className="w-[132px] shrink-0 rounded-[1.1rem] border border-sky-100/25 bg-sky-300/20 px-2.5 py-2 backdrop-blur-xl sm:w-auto sm:min-w-[220px] sm:rounded-[1.25rem] sm:px-4 sm:py-3">
+              <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3 sm:gap-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70 sm:text-xs sm:tracking-[0.2em]">Audio</p>
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsMuted((current) => !current);
-                    ensureMediaPlayback();
-                  }}
+                  onClick={handleMuteToggle}
+                  onPointerDown={ensureMediaPlayback}
                   onTouchStart={ensureMediaPlayback}
-                  className="rounded-full border border-sky-100/30 bg-white/20 px-2.5 py-1 text-[11px] font-semibold text-white sm:px-3 sm:py-1.5 sm:text-xs"
+                  className="rounded-full border border-sky-100/30 bg-white/20 px-2 py-1 text-[10px] font-semibold text-white sm:px-3 sm:py-1.5 sm:text-xs"
                 >
                   {isMuted ? "Unmute" : "Mute"}
                 </button>
@@ -307,18 +329,19 @@ export default function App() {
                 max="1"
                 step="0.01"
                 value={masterVolume}
-                onChange={(event) => {
-                  setMasterVolume(Number(event.target.value));
-                  ensureMediaPlayback();
-                }}
-                onInput={(event) => {
-                  setMasterVolume(Number(event.target.value));
-                  ensureMediaPlayback();
-                }}
+                onChange={(event) => handleVolumeChange(event.target.value)}
+                onInput={(event) => handleVolumeChange(event.target.value)}
+                onPointerDown={ensureMediaPlayback}
                 onTouchStart={ensureMediaPlayback}
+                aria-label="Audio volume"
                 className="w-full accent-white touch-pan-x"
               />
             </div>
+          </div>
+          <div className="mt-3 sm:mt-4">
+            <p className="max-w-2xl text-sm leading-6 text-white/85">
+              {welcomeMessage}
+            </p>
           </div>
         </header>
 
