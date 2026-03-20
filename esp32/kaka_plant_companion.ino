@@ -6,7 +6,7 @@
 
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* API_URL = "http://YOUR_SERVER_IP:4000/api/v1/sensor-data";
+const char* API_URL = "https://kaka-server-bujv.onrender.com/api/v1/sensor-data";
 
 // Set this to your local UTC offset if you want local serial timestamps.
 // India is +5:30, so 19800 seconds.
