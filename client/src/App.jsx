@@ -267,7 +267,7 @@ export default function App() {
   const metrics = latest && status
     ? [
         { key: "soil_moisture", title: "Soil Moisture", unit: "%", value: latest.soil_moisture, status: status.statuses.soil },
-        { key: "sunlight", title: "Sunlight", unit: "lx", value: latest.sunlight, status: status.statuses.sunlight },
+        { key: "sunlight", title: "Sunlight", unit: "%", value: latest.sunlight, status: status.statuses.sunlight },
         { key: "temperature", title: "Temperature", unit: "°C", value: latest.temperature, status: status.statuses.temperature },
         { key: "humidity", title: "Humidity", unit: "%", value: latest.humidity, status: status.statuses.humidity }
       ]
@@ -713,7 +713,7 @@ const buildSuggestions = (status, lastFertilizedAt) => {
     items.push({
       id: "soil",
       icon: "💧",
-      message: "Soil moisture is outside the ideal 5% to 25% range. Adjust watering to bring KAKA back into balance."
+      message: "Soil moisture is outside the ideal 10% to 60% range. Adjust watering to bring KAKA back into balance."
     });
   }
 
@@ -721,7 +721,7 @@ const buildSuggestions = (status, lastFertilizedAt) => {
     items.push({
       id: "sunlight",
       icon: "☀️",
-      message: "Sunlight looks low. Move KAKA somewhere brighter for a while."
+      message: "Sunlight is below the ideal 35% level. Move KAKA somewhere brighter for a while."
     });
   }
 
@@ -729,7 +729,7 @@ const buildSuggestions = (status, lastFertilizedAt) => {
     items.push({
       id: "temperature",
       icon: "🌡️",
-      message: "Temperature is outside the ideal 10C to 32C range. Try making KAKA's space a bit more comfortable."
+      message: "Temperature is outside the ideal 10C to 35C range. Try making KAKA's space a bit more comfortable."
     });
   }
 
@@ -737,7 +737,7 @@ const buildSuggestions = (status, lastFertilizedAt) => {
     items.push({
       id: "humidity",
       icon: "💨",
-      message: "Humidity is outside the ideal 20% to 40% range. A little adjustment in the air around KAKA would help."
+      message: "Humidity is outside the ideal 20% to 50% range. A little adjustment in the air around KAKA would help."
     });
   }
 

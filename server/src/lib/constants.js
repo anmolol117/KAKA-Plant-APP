@@ -1,8 +1,8 @@
 export const DEFAULT_SETTINGS = {
-  soil_range: [5, 25],
-  sunlight_threshold: 4000,
-  temperature_range: [10, 32],
-  humidity_range: [20, 40],
+  soil_range: [10, 60],
+  sunlight_threshold: 35,
+  temperature_range: [10, 35],
+  humidity_range: [20, 50],
   fertilizer_interval_days: 30
 };
 
@@ -10,6 +10,8 @@ export const DEFAULT_PREFERENCES = {
   pot_design: "pink",
   sound_enabled: true
 };
+
+export const APP_TIMEZONE = "Asia/Kolkata";
 
 export const RANGE_TO_HOURS = {
   "6h": 6,

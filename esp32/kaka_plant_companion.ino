@@ -4,8 +4,8 @@
 #include <DHT.h>
 #include <time.h>
 
-const char* WIFI_SSID = "YOUR_WIFI_NAME";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID = "Anmol5G";
+const char* WIFI_PASSWORD = "mangat@221";
 const char* API_URL = "https://kaka-server-bujv.onrender.com/api/v1/sensor-data";
 
 // Set this to your local UTC offset if you want local serial timestamps.
@@ -33,12 +33,10 @@ DHT dht(DHT_PIN, DHT_TYPE);
 const int SOIL_RAW_DRY = 3200;
 const int SOIL_RAW_WET = 1400;
 
-// Photoresistor tuning:
-// These values are approximations and usually need adjustment for your LDR circuit.
-const float ADC_REFERENCE_VOLTAGE = 3.3f;
-const int ADC_MAX = 4095;
-const float LDR_FIXED_RESISTOR_OHMS = 10000.0f;
-const float LUX_CALIBRATION_FACTOR = 500.0f;
+// Photoresistor calibration:
+// Update these after checking the brightest and darkest raw readings in your setup.
+const int LIGHT_RAW_DARK = 200;
+const int LIGHT_RAW_BRIGHT = 3800;
 
 struct SensorReading {
   unsigned long timestamp;
@@ -119,17 +117,9 @@ int readLightRaw() {
   return analogRead(LIGHT_PIN);
 }
 
-int calculateLux(int rawValue) {
-  if (rawValue <= 0) return 0;
-
-  float voltage = (static_cast<float>(rawValue) / ADC_MAX) * ADC_REFERENCE_VOLTAGE;
-  if (voltage <= 0.01f || voltage >= ADC_REFERENCE_VOLTAGE) {
-    return 0;
-  }
-
-  float ldrResistance = (ADC_REFERENCE_VOLTAGE - voltage) * LDR_FIXED_RESISTOR_OHMS / voltage;
-  float lux = LUX_CALIBRATION_FACTOR * pow(LDR_FIXED_RESISTOR_OHMS / ldrResistance, 1.4f);
-  return max(0, static_cast<int>(lux));
+int calculateSunlightPercent(int rawValue) {
+  int percent = map(rawValue, LIGHT_RAW_DARK, LIGHT_RAW_BRIGHT, 0, 100);
+  return constrain(percent, 0, 100);
 }
 
 float readTemperatureC() {
@@ -152,7 +142,7 @@ SensorReading captureReading() {
   float humidity = readHumidityPercent();
 
   reading.soilMoisture = calculateSoilMoisturePercent(rawSoil);
-  reading.sunlight = calculateLux(rawLight);
+  reading.sunlight = calculateSunlightPercent(rawLight);
   reading.temperature = temperature;
   reading.humidity = humidity;
   reading.valid = !isnan(temperature) && !isnan(humidity);
@@ -168,7 +158,7 @@ SensorReading captureReading() {
   Serial.print(rawLight);
   Serial.print(" -> ");
   Serial.print(reading.sunlight);
-  Serial.println(" lux");
+  Serial.println("%");
 
   Serial.print("  Temperature: ");
   Serial.print(reading.temperature);

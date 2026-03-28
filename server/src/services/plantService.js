@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { DEFAULT_SETTINGS } from "../lib/constants.js";
+import { APP_TIMEZONE, DEFAULT_SETTINGS } from "../lib/constants.js";
 import {
   createReadingRecord,
   ensureFirestoreDefaults,
@@ -105,7 +105,7 @@ export const evaluatePlantStatus = (reading, settings = DEFAULT_SETTINGS, now = 
     };
   }
 
-  const hour = now.getHours();
+  const hour = getHourInTimezone(now, APP_TIMEZONE);
   const isDaytime = hour >= 6 && hour < 18;
   const isNight = hour >= 20 || hour < 6;
 
@@ -145,6 +145,16 @@ export const evaluatePlantStatus = (reading, settings = DEFAULT_SETTINGS, now = 
   };
 };
 
+const getHourInTimezone = (date, timeZone) => {
+  const hourText = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    hour12: false
+  }).format(date);
+
+  return Number(hourText);
+};
+
 export const getSuggestions = async (
   reading = null,
   settings = null,
@@ -166,7 +176,7 @@ export const getSuggestions = async (
     suggestions.push({
       id: "water",
       icon: "💧",
-      message: "Soil moisture is outside the ideal 5% to 25% range. Adjust watering to bring it back into balance."
+      message: "Soil moisture is outside the ideal 10% to 60% range. Adjust watering to bring it back into balance."
     });
   }
 
@@ -174,7 +184,7 @@ export const getSuggestions = async (
     suggestions.push({
       id: "sunlight",
       icon: "☀️",
-      message: "Move KAKA closer to sunlight for stronger daytime growth."
+      message: "Sunlight is below the ideal 35% level. Move KAKA somewhere brighter for stronger daytime growth."
     });
   }
 
@@ -182,7 +192,7 @@ export const getSuggestions = async (
     suggestions.push({
       id: "temperature",
       icon: "🌡",
-      message: "Temperature is outside the ideal 10C to 32C range. Adjust the environment to keep KAKA comfortable."
+      message: "Temperature is outside the ideal 10C to 35C range. Adjust the environment to keep KAKA comfortable."
     });
   }
 
@@ -190,7 +200,7 @@ export const getSuggestions = async (
     suggestions.push({
       id: "humidity",
       icon: "💨",
-      message: "Humidity is outside the ideal 20% to 40% range. A small adjustment in airflow or moisture would help."
+      message: "Humidity is outside the ideal 20% to 50% range. A small adjustment in airflow or moisture would help."
     });
   }
 

@@ -1,7 +1,7 @@
-import morningBackground from "../assets/morning.png";
-import afternoonBackground from "../assets/afternoon.png";
-import eveningBackground from "../assets/evening.png";
-import nightBackground from "../assets/night.png";
+import morningBackground from "../assets/morning.webp";
+import afternoonBackground from "../assets/afternoon.webp";
+import eveningBackground from "../assets/evening.webp";
+import nightBackground from "../assets/night.webp";
 import autumnPot from "../assets/autumn_pot.png";
 import pinkPot from "../assets/pink_pot.png";
 import tuxedoPot from "../assets/tuxedo_pot.png";
@@ -9,6 +9,18 @@ import whitePot from "../assets/white_pot.png";
 
 export const getTimeTheme = (date = new Date()) => {
   const hour = date.getHours();
+
+  if (hour < 6) {
+    return {
+      name: "night",
+      backgroundImage: nightBackground,
+      gradient: "from-[#091528] via-[#152d5a] to-[#2d4478]",
+      halo: "bg-[#a9c3ff]/18",
+      orb: "bg-[#dce7ff]",
+      veil: "bg-[radial-gradient(circle_at_top,rgba(157,184,255,0.08),transparent_38%)]",
+      overlay: "bg-[linear-gradient(to_bottom,rgba(2,5,12,0.28),rgba(2,5,12,0.7))]"
+    };
+  }
 
   if (hour < 12) {
     return {

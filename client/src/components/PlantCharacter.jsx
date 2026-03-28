@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import beeGif from "../assets/animated_assets/bee.gif";
 import butterflyGif from "../assets/animated_assets/butterfly.gif";
-import kakaBackground from "../assets/KAKA_background.png";
+import kakaBackground from "../assets/KAKA_background.webp";
 import jadePlant from "../assets/jade_plant.png";
 import autumnPot from "../assets/autumn_pot.png";
 import pinkPot from "../assets/pink_pot.png";
