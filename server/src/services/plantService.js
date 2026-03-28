@@ -200,7 +200,7 @@ export const getSuggestions = async (
     suggestions.push({
       id: "humidity",
       icon: "💨",
-      message: "Humidity is outside the ideal 20% to 50% range. A small adjustment in airflow or moisture would help."
+      message: "Humidity is outside the ideal 20% to 60% range. A small adjustment in airflow or moisture would help."
     });
   }
 

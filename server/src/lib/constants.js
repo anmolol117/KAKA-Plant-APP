@@ -2,7 +2,7 @@ export const DEFAULT_SETTINGS = {
   soil_range: [10, 60],
   sunlight_threshold: 35,
   temperature_range: [10, 35],
-  humidity_range: [20, 50],
+  humidity_range: [20, 60],
   fertilizer_interval_days: 30
 };
 

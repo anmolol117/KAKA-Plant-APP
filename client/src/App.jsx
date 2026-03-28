@@ -737,7 +737,7 @@ const buildSuggestions = (status, lastFertilizedAt) => {
     items.push({
       id: "humidity",
       icon: "💨",
-      message: "Humidity is outside the ideal 20% to 50% range. A little adjustment in the air around KAKA would help."
+      message: "Humidity is outside the ideal 20% to 60% range. A little adjustment in the air around KAKA would help."
     });
   }
 

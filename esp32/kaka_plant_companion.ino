@@ -4,40 +4,39 @@
 #include <DHT.h>
 #include <time.h>
 
+// ---------- WiFi ----------
 const char* WIFI_SSID = "Anmol5G";
 const char* WIFI_PASSWORD = "mangat@221";
 const char* API_URL = "https://kaka-server-bujv.onrender.com/api/v1/sensor-data";
 
-// Set this to your local UTC offset if you want local serial timestamps.
-// India is +5:30, so 19800 seconds.
+// ---------- Time ----------
 const long GMT_OFFSET_SECONDS = 19800;
 const int DAYLIGHT_OFFSET_SECONDS = 0;
 
-// Wake, measure, send, then sleep for one minute.
+// ---------- Sleep ----------
 const uint64_t SLEEP_INTERVAL_US = 60ULL * 1000000ULL;
+
+// ---------- HTTP ----------
 const int WIFI_CONNECT_TIMEOUT_MS = 20000;
 const int HTTP_TIMEOUT_MS = 10000;
 const int MAX_POST_RETRIES = 3;
 
-// Pins
+// ---------- Pins ----------
 const int SOIL_PIN = 34;
 const int LIGHT_PIN = 35;
 const int DHT_PIN = 4;
 
-// DHT11
+// ---------- DHT ----------
 #define DHT_TYPE DHT11
 DHT dht(DHT_PIN, DHT_TYPE);
 
-// Soil sensor calibration:
-// Update these after checking your dry and wet sensor values.
+// ---------- Calibration ----------
 const int SOIL_RAW_DRY = 3200;
-const int SOIL_RAW_WET = 1400;
+const int SOIL_RAW_WET = 1100;
 
-// Photoresistor calibration:
-// Update these after checking the brightest and darkest raw readings in your setup.
-const int LIGHT_RAW_DARK = 200;
-const int LIGHT_RAW_BRIGHT = 3800;
+const int ADC_MAX = 4095;
 
+// ---------- STRUCT (FIXED POSITION) ----------
 struct SensorReading {
   unsigned long timestamp;
   int soilMoisture;
@@ -47,14 +46,25 @@ struct SensorReading {
   bool valid;
 };
 
+// ---------- Helper: Averaging ----------
+int readAverage(int pin) {
+  int sum = 0;
+  for (int i = 0; i < 5; i++) {
+    sum += analogRead(pin);
+    delay(10);
+  }
+  return sum / 5;
+}
+
+// ---------- WiFi ----------
 void connectToWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   Serial.print("Connecting to WiFi");
-  const unsigned long startedAt = millis();
+  unsigned long start = millis();
 
-  while (WiFi.status() != WL_CONNECTED && millis() - startedAt < WIFI_CONNECT_TIMEOUT_MS) {
+  while (WiFi.status() != WL_CONNECTED && millis() - start < WIFI_CONNECT_TIMEOUT_MS) {
     delay(500);
     Serial.print(".");
   }
@@ -63,184 +73,134 @@ void connectToWiFi() {
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("WiFi connected");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
   } else {
-    Serial.println("WiFi connection timed out");
+    Serial.println("WiFi connection failed");
   }
 }
 
+// ---------- Time ----------
 void syncTime() {
-  configTime(GMT_OFFSET_SECONDS, DAYLIGHT_OFFSET_SECONDS, "pool.ntp.org", "time.nist.gov");
+  configTime(GMT_OFFSET_SECONDS, DAYLIGHT_OFFSET_SECONDS, "pool.ntp.org");
 
-  Serial.print("Syncing clock");
   time_t now = time(nullptr);
   int attempts = 0;
 
   while (now < 1700000000 && attempts < 20) {
     delay(500);
-    Serial.print(".");
     now = time(nullptr);
     attempts++;
-  }
-
-  Serial.println();
-
-  if (now >= 1700000000) {
-    Serial.print("Clock synced. Epoch: ");
-    Serial.println(now);
-  } else {
-    Serial.println("Clock sync failed. Falling back to uptime-based timestamp.");
   }
 }
 
 unsigned long getUnixTimestamp() {
   time_t now = time(nullptr);
-  if (now >= 1700000000) {
-    return static_cast<unsigned long>(now);
-  }
-
-  // Fallback only if NTP was unavailable.
-  return 1710000000UL + (millis() / 1000UL);
+  if (now >= 1700000000) return now;
+  return 1710000000UL + millis() / 1000UL;
 }
 
-int readSoilMoistureRaw() {
-  return analogRead(SOIL_PIN);
-}
-
-int calculateSoilMoisturePercent(int rawValue) {
-  int percent = map(rawValue, SOIL_RAW_DRY, SOIL_RAW_WET, 0, 100);
+// ---------- Sensor Calculations ----------
+int calculateSoilPercent(int raw) {
+  int percent = map(raw, SOIL_RAW_DRY, SOIL_RAW_WET, 0, 100);
   return constrain(percent, 0, 100);
 }
 
-int readLightRaw() {
-  return analogRead(LIGHT_PIN);
+int calculateLightPercent(int raw) {
+  int inverted = ADC_MAX - raw;
+  return map(inverted, 0, ADC_MAX, 0, 100);
 }
 
-int calculateSunlightPercent(int rawValue) {
-  int percent = map(rawValue, LIGHT_RAW_DARK, LIGHT_RAW_BRIGHT, 0, 100);
-  return constrain(percent, 0, 100);
+float readTemp() {
+  float t = dht.readTemperature();
+  return isnan(t) ? NAN : t;
 }
 
-float readTemperatureC() {
-  float value = dht.readTemperature();
-  return isnan(value) ? NAN : value;
+float readHum() {
+  float h = dht.readHumidity();
+  return isnan(h) ? NAN : h;
 }
 
-float readHumidityPercent() {
-  float value = dht.readHumidity();
-  return isnan(value) ? NAN : value;
-}
-
+// ---------- Capture ----------
 SensorReading captureReading() {
-  SensorReading reading;
-  reading.timestamp = getUnixTimestamp();
+  SensorReading r;
+  r.timestamp = getUnixTimestamp();
 
-  int rawSoil = readSoilMoistureRaw();
-  int rawLight = readLightRaw();
-  float temperature = readTemperatureC();
-  float humidity = readHumidityPercent();
+  int soilRaw = readAverage(SOIL_PIN);
+  int lightRaw = readAverage(LIGHT_PIN);
 
-  reading.soilMoisture = calculateSoilMoisturePercent(rawSoil);
-  reading.sunlight = calculateSunlightPercent(rawLight);
-  reading.temperature = temperature;
-  reading.humidity = humidity;
-  reading.valid = !isnan(temperature) && !isnan(humidity);
+  float t = readTemp();
+  float h = readHum();
 
-  Serial.println("Captured sensor values:");
-  Serial.print("  Soil raw: ");
-  Serial.print(rawSoil);
-  Serial.print(" -> ");
-  Serial.print(reading.soilMoisture);
-  Serial.println("%");
+  r.soilMoisture = calculateSoilPercent(soilRaw);
+  r.sunlight = calculateLightPercent(lightRaw);
+  r.temperature = t;
+  r.humidity = h;
+  r.valid = !isnan(t) && !isnan(h);
 
-  Serial.print("  Light raw: ");
-  Serial.print(rawLight);
-  Serial.print(" -> ");
-  Serial.print(reading.sunlight);
-  Serial.println("%");
+  Serial.println("---- Sensor Data ----");
+  Serial.print("Soil: "); Serial.print(r.soilMoisture); Serial.println("%");
+  Serial.print("Light: "); Serial.print(r.sunlight); Serial.println("%");
+  Serial.print("Temp: "); Serial.println(r.temperature);
+  Serial.print("Humidity: "); Serial.println(r.humidity);
 
-  Serial.print("  Temperature: ");
-  Serial.print(reading.temperature);
-  Serial.println(" C");
-
-  Serial.print("  Humidity: ");
-  Serial.print(reading.humidity);
-  Serial.println("%");
-
-  return reading;
+  return r;
 }
 
-String buildPayload(const SensorReading& reading) {
+// ---------- JSON ----------
+String buildPayload(const SensorReading& r) {
   String payload = "{";
-  payload += "\"timestamp\":" + String(reading.timestamp) + ",";
-  payload += "\"soil_moisture\":" + String(reading.soilMoisture) + ",";
-  payload += "\"sunlight\":" + String(reading.sunlight) + ",";
-  payload += "\"temperature\":" + String(reading.temperature, 1) + ",";
-  payload += "\"humidity\":" + String(reading.humidity, 1);
+  payload += "\"timestamp\":" + String(r.timestamp) + ",";
+  payload += "\"soil_moisture\":" + String(r.soilMoisture) + ",";
+  payload += "\"sunlight\":" + String(r.sunlight) + ",";
+  payload += "\"temperature\":" + String(r.temperature, 1) + ",";
+  payload += "\"humidity\":" + String(r.humidity, 1);
   payload += "}";
   return payload;
 }
 
-bool postReading(const SensorReading& reading) {
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi not connected. Trying reconnect before POST.");
-    connectToWiFi();
-  }
+// ---------- POST ----------
+bool postReading(const SensorReading& r) {
+  if (WiFi.status() != WL_CONNECTED) connectToWiFi();
+  if (WiFi.status() != WL_CONNECTED) return false;
 
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Skipping POST because WiFi is still unavailable.");
-    return false;
-  }
+  String payload = buildPayload(r);
 
-  String payload = buildPayload(reading);
-  Serial.println("Sending payload:");
-  Serial.println(payload);
-
-  for (int attempt = 1; attempt <= MAX_POST_RETRIES; attempt++) {
+  for (int i = 0; i < MAX_POST_RETRIES; i++) {
     HTTPClient http;
     http.setTimeout(HTTP_TIMEOUT_MS);
     http.begin(API_URL);
     http.addHeader("Content-Type", "application/json");
 
-    int responseCode = http.POST(payload);
-    String responseBody = http.getString();
+    int code = http.POST(payload);
+    String response = http.getString();
     http.end();
 
-    if (responseCode > 0 && responseCode < 300) {
-      Serial.print("POST succeeded on attempt ");
-      Serial.print(attempt);
-      Serial.print(" with code ");
-      Serial.println(responseCode);
-      Serial.println(responseBody);
+    if (code > 0 && code < 300) {
+      Serial.println("POST success");
+      Serial.println(response);
       return true;
     }
 
-    Serial.print("POST attempt ");
-    Serial.print(attempt);
-    Serial.print(" failed. Code: ");
-    Serial.println(responseCode);
-
-    if (responseBody.length() > 0) {
-      Serial.println(responseBody);
-    }
-
+    Serial.print("POST failed: ");
+    Serial.println(code);
     delay(1500);
   }
 
   return false;
 }
 
-void enterLowPowerSleep() {
-  Serial.println("Entering deep sleep for 60 seconds.");
-  WiFi.disconnect(true, true);
+// ---------- Sleep ----------
+void enterSleep() {
+  Serial.println("Sleeping...");
+  WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
   btStop();
+
   esp_sleep_enable_timer_wakeup(SLEEP_INTERVAL_US);
   Serial.flush();
   esp_deep_sleep_start();
 }
 
+// ---------- Setup ----------
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -249,27 +209,20 @@ void setup() {
   dht.begin();
   Wire.begin();
 
-  Serial.println();
-  Serial.println("KAKA Plant Companion booting...");
+  Serial.println("🌱 KAKA Plant Companion Booting...");
 
   connectToWiFi();
   syncTime();
 
-  SensorReading reading = captureReading();
-  if (!reading.valid) {
-    Serial.println("DHT11 read failed. Data was not sent this cycle.");
-    enterLowPowerSleep();
-    return;
+  SensorReading r = captureReading();
+
+  if (r.valid) {
+    postReading(r);
+  } else {
+    Serial.println("DHT failed");
   }
 
-  bool sent = postReading(reading);
-  if (!sent) {
-    Serial.println("Reading could not be uploaded this cycle.");
-  }
-
-  enterLowPowerSleep();
+  enterSleep();
 }
 
-void loop() {
-  // The device should never stay awake long enough to loop continuously.
-}
+void loop() {}
